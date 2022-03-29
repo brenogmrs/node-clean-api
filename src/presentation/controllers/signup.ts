@@ -1,6 +1,6 @@
 import { HttpRequest, HttpResponse } from '../protocols/http';
 
-export default class SignUpController {
+export class SignUpController {
     handle(httpRequest: HttpRequest): HttpResponse {
         if (!httpRequest.body.name) {
             return {

@@ -1,4 +1,4 @@
-import SignUpController from './signup';
+import { SignUpController } from './signup';
 
 const makeSut = (): SignUpController => {
     return new SignUpController();

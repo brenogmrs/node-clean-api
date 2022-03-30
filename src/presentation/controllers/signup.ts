@@ -6,11 +6,7 @@ import { EmailValidator } from '../protocols/emailValidator';
 import { HttpRequest, HttpResponse } from '../protocols/http';
 
 export class SignUpController implements Controller {
-    private readonly emailValidator: EmailValidator;
-
-    constructor(emailValidator: EmailValidator) {
-        this.emailValidator = emailValidator;
-    }
+    constructor(private readonly emailValidator: EmailValidator) {}
 
     handle(httpRequest: HttpRequest): HttpResponse {
         const requiredFields = ['email', 'name', 'password', 'passwordConfirmation'];

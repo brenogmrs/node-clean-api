@@ -5,7 +5,9 @@ import { LogControllerDecorator } from './log';
 
 const makeLogErrorRepository = (): LogErrorRepository => {
     class LogErrorRepositoryStub implements LogErrorRepository {
-        async log(stack: string): Promise<void> {}
+        async log(stack: string): Promise<void> {
+            return new Promise(resolve => resolve());
+        }
     }
 
     return new LogErrorRepositoryStub();

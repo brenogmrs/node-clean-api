@@ -1,5 +1,6 @@
 import { LogErrorRepository } from '../../data/protocols/log-error-repository';
-import { serverError } from '../../presentation/helpers/http-helpers';
+import { AccountModel } from '../../domain/models/account';
+import { serverError, ok } from '../../presentation/helpers/http-helpers';
 import { Controller, HttpRequest, HttpResponse } from '../../presentation/protocols';
 import { LogControllerDecorator } from './log';
 
@@ -16,22 +17,35 @@ const makeLogErrorRepository = (): LogErrorRepository => {
 const makeController = (): Controller => {
     class ControllerSub implements Controller {
         async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
-            const httpResponse = {
-                statusCode: 200,
-                body: {
-                    email: 'any_email@gmail.com',
-                    name: 'name',
-                    password: '123234',
-                    passwordConfirmation: '123234',
-                },
-            };
-
-            // eslint-disable-next-line no-shadow
-            return new Promise(resolve => resolve(httpResponse));
+            // eslint-disable-next-line no-use-before-define
+            return new Promise(resolve => resolve(ok(makeFakeAccount())));
         }
     }
 
     return new ControllerSub();
+};
+
+const makeFakeRequest = (): HttpRequest => ({
+    body: {
+        name: 'any_name',
+        email: 'valid@email.com',
+        password: 'password',
+        passwordConfirmation: 'password',
+    },
+});
+
+const makeFakeAccount = (): AccountModel => ({
+    id: 'valid_id',
+    name: 'valid_name',
+    email: 'valid@email.com',
+    password: 'valid_password',
+});
+
+const makeFakeServerError = (): HttpResponse => {
+    const fakeError = new Error();
+    fakeError.stack = 'error_stack_trace';
+
+    return serverError(fakeError);
 };
 
 interface SutTypes {
@@ -58,14 +72,7 @@ describe('Log Controller Decorator', () => {
 
         const handleSpy = jest.spyOn(controllerStub, 'handle');
 
-        const httpRequest = {
-            body: {
-                email: 'any_email@gmail.com',
-                name: 'name',
-                password: '123234',
-                passwordConfirmation: '123234',
-            },
-        };
+        const httpRequest = makeFakeRequest();
 
         await sut.handle(httpRequest);
         expect(handleSpy).toHaveBeenCalledWith(httpRequest);
@@ -74,44 +81,21 @@ describe('Log Controller Decorator', () => {
     test('should return the same result of the controller', async () => {
         const { sut } = makeSut();
 
-        const httpRequest = {
-            body: {
-                email: 'any_email@gmail.com',
-                name: 'name',
-                password: '123234',
-                passwordConfirmation: '123234',
-            },
-        };
+        const httpRequest = makeFakeRequest();
 
         const httpResponse = await sut.handle(httpRequest);
-        expect(httpResponse).toEqual({
-            statusCode: 200,
-            body: {
-                email: 'any_email@gmail.com',
-                name: 'name',
-                password: '123234',
-                passwordConfirmation: '123234',
-            },
-        });
+        expect(httpResponse).toEqual(ok(makeFakeAccount()));
     });
 
     test('should call LogErrorRepository with correct error if controller return an ServerError', async () => {
         const { sut, controllerStub, logErrorRepositoryStub } = makeSut();
-        const fakeError = new Error();
-        fakeError.stack = 'error_stack_trace';
-        const error = serverError(fakeError);
 
-        jest.spyOn(controllerStub, 'handle').mockResolvedValueOnce(error);
+        jest.spyOn(controllerStub, 'handle').mockResolvedValueOnce(
+            makeFakeServerError(),
+        );
         const logSpy = jest.spyOn(logErrorRepositoryStub, 'log');
 
-        const httpRequest = {
-            body: {
-                email: 'any_email@gmail.com',
-                name: 'name',
-                password: '123234',
-                passwordConfirmation: '123234',
-            },
-        };
+        const httpRequest = makeFakeRequest();
 
         await sut.handle(httpRequest);
         expect(logSpy).toHaveBeenCalledWith('error_stack_trace');
